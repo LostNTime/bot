@@ -1,6 +1,4 @@
 const eris = require("eris")
-const Discord = require('discord.js');
-const nexus = new Discord.Client();
 let config = require('./config.json')
 let tokens = require('./tokens.json')
 const YouTube = require('youtube-node');
@@ -29,7 +27,7 @@ const commands = {
 		console.log(queue);
 		(function play(song) {
 			console.log(song);
-			if (song === undefined) return msg.channel.sendMessage('Leaving voiceChannel... Queue is empty').then(() => {
+			if (song === undefined) return eris.createMessage(msg.channel.id,'Leaving voiceChannel... Queue is empty').then(() => {
 				queue[msg.guild.id].playing = false;
 				msg.member.voiceChannel.leave();
 			});
@@ -38,15 +36,15 @@ const commands = {
 			let collector = msg.channel.createCollector(m => m);
 			collector.on('message', m => {
 				if (m.content.startsWith(tokens.prefix + 'pause')) {
-					if (!voiceChannel || voiceChannel.type !== 'voice') return msg.channel.sendMessage(':fire: Please join a voiceChannel.');	
-					msg.channel.sendMessage('Paused music').then(() => {dispatcher.pause();});
+					if (!voiceChannel || voiceChannel.type !== 'voice') return eris.createMessage(msg.channel.id,':fire: Please join a voiceChannel.');	
+					eris.createMessage(msg.channel.id,'Paused music').then(() => {dispatcher.pause();});
 				} else if (m.content.startsWith(tokens.prefix + 'resume')){
-						if (!voiceChannel || voiceChannel.type !== 'voice') return msg.channel.sendMessage(':fire: Please join a voiceChannel.');
-					msg.channel.sendMessage('Resumed music').then(() => {dispatcher.resume();});
+						if (!voiceChannel || voiceChannel.type !== 'voice') return eris.createMessage(msg.channel.id,':fire: Please join a voiceChannel.');
+					eris.createMessage(msg.channel.id,'Resumed music').then(() => {dispatcher.resume();});
 				} else if (m.content.startsWith(tokens.prefix + 'skip')){
-						if (!voiceChannel || voiceChannel.type !== 'voice') return msg.channel.sendMessage(':fire: Please join a voiceChannel.');
+						if (!voiceChannel || voiceChannel.type !== 'voice') return eris.createMessage(msg.channel.id,':fire: Please join a voiceChannel.');
 					// msg.channel.sendMessage('This command is currently disabled at the time being.')
-					msg.channel.sendMessage('Song skipped.').then(() => {dispatcher.end();});
+					eris.createMessage(msg.channel.id,'Song skipped.').then(() => {dispatcher.end();});
 				// } else if (m.content.startsWith(tokens.prefix + 'time')){
 				// 	msg.channel.sendMessage(`time: ${Math.floor(dispatcher.time / 60000)}:${Math.floor((dispatcher.time % 60000)/1000) <10 ? '0'+Math.floor((dispatcher.time % 60000)/1000) : Math.floor((dispatcher.time % 60000)/1000)}`);
 				}
@@ -57,19 +55,19 @@ const commands = {
 				play(queue[msg.guild.id].songs[0]);
 			});
 			dispatcher.on('error', (err) => {
-				return msg.channel.sendMessage('error: ' + err).then(() => {
+				return eris.createMessage(msg.channel.id,'error: ' + err).then(() => {
 					collector.stop();
-					queue[msg.guild.id].songs.shift();
-					play(queue[msg.guild.id].songs[0]);
+					queue[msg.channel.guild.id].songs.shift();
+					play(queue[msg.channel.guild.id].songs[0]);
 				});
 			});
-		})(queue[msg.guild.id].songs[0]);
+		})(queue[msg.channel.guild.id].songs[0]);
 	},
 	'join': (msg) => {
-		if (!msg.guild || !msg.member) return;
+		if (!msg.channel.guild || !msg.member) return;
 		return new Promise((resolve, reject) => {
 			const voiceChannel = msg.member.voiceChannel;
-			if (!voiceChannel || voiceChannel.type !== 'voice') return msg.channel.sendMessage(':fire: Please join a voiceChannel.');
+			if (!voiceChannel || voiceChannel.type !== 'voice') return eris.createMessage(msg.channel.id,':fire: Please join a voiceChannel.');
 			voiceChannel.join().then(connection => resolve(connection)).catch(err => reject(err));
 		});
 	},
@@ -88,10 +86,10 @@ const commands = {
 		if (!msg.guild || !msg.member) return;
 	return new Promise((resolve, reject) => {
 	 let name = msg.content.split(" ").splice(1).join(" ");
-	             	if (name == '' || name === undefined) return msg.channel.sendMessage(`:fire: An error has occured. Please do ${tokens.prefix}add \`<url|song name>\``)
+	             	if (name == '' || name === undefined) return eris.createMessage(msg.channel.id,`:fire: An error has occured. Please do ${tokens.prefix}add \`<url|song name>\``)
             youTube.search(name, 1, function(error, result) {
                 if (error) {
-                    if (err) return msg.channel.sendMessage('Error: ' + err);
+                    if (err) return eris.createMessage(msg.channel.id,'Error: ' + err);
                 } else {
                 if (!queue.hasOwnProperty(msg.guild.id)) queue[msg.guild.id] = {}, queue[msg.guild.id].playing = false, queue[msg.guild.id].songs = []; 
                 queue[msg.guild.id].songs.push({
@@ -100,7 +98,7 @@ const commands = {
                     requester: msg.author.username
                 });
                   //   msg.channel.sendMessage(`**Added __${result.items[0].snippet.title}__ to the queue** Requested by ${msg.author.username}`);
-                     msg.channel.sendMessage("", {embed: {
+                    eris.createMessage(msg.channel.id,"", {embed: {
 					description: `**Added __${result.items[0].snippet.title}__ to the queue** Requested by ${msg.author.username}`
 }
 });
@@ -110,10 +108,10 @@ const commands = {
 	},
 	'queue': (msg) => {
 		if (!msg.guild || !msg.member) return;
-		if (queue[msg.guild.id] === undefined) return msg.channel.sendMessage(`Add some songs to the queue first with ${tokens.prefix}add`);
+		if (queue[msg.guild.id] === undefined) return eris.createMessage(msg.channel.id,`Add some songs to the queue first with ${tokens.prefix}add`);
 		let tosend = [];
-		queue[msg.guild.id].songs.forEach((song, i) => { tosend.push(`${i+1}. ${song.title} - Requested by: ${song.requester}`);});
-		msg.channel.sendMessage(`Current songs queued ${(tosend.length > 5 ? '*[Only next 5 shown]*' : '')}\n\`\`\`${tosend.slice(0,15).join('\n')}\`\`\``);
+		queue[msg.channel.guild.id].songs.forEach((song, i) => { tosend.push(`${i+1}. ${song.title} - Requested by: ${song.requester}`);});
+		eris.createMessage(msg.channel.id,`Current songs queued ${(tosend.length > 5 ? '*[Only next 5 shown]*' : '')}\n\`\`\`${tosend.slice(0,15).join('\n')}\`\`\``);
 	
 	},
 	'stop': (msg) => {
@@ -136,16 +134,16 @@ voiceChannel.leave()
 	},
 	'volume': (msg) => {
 	return new Promise((resolve, reject) => {
-	msg.channel.sendMessage("To turn the volume up or down, use the nexus to do that, by right clicking on Nexus. http://prntscr.com/dyl114")
+	eris.createMessage(msg.channel.id,"To turn the volume up or down, use the nexus to do that, by right clicking on Nexus. http://prntscr.com/dyl114")
 	});
 	},
 	'subscribe': (msg) => {
 		if (!msg.guild || !msg.member) return;
-	     if (msg.guild.id === '270015194061602817') {
+	     if (msg.channel.guild.id === '270015194061602817') {
         let member = msg.guild.member
         var role = msg.guild.roles.find('name', "Subscriber");
         msg.member.addRole(role)
-        msg.channel.sendMessage(`:tada: You have successfully subscribed!`)
+        eris.createMessage(msg.channel.id,`:tada: You have successfully subscribed!`)
     } else {
     msg.reply('Sorry but this command only works in my guild')  
 	}
@@ -158,7 +156,16 @@ voiceChannel.leave()
             var evaled = eval(evalcode);
             if (typeof evaled !== "string")
                 evaled = require("util").inspect(evaled);
-             msg.channel.sendMessage({
+		
+        function clean(text) {
+            if (typeof(text) === "string") {
+                return text.replace(/`/g, "`" + String.fromCharCode(8203)).replace(/@/g, "@" + String.fromCharCode(8203));
+            } else {
+                return text;
+            }
+            }
+	}
+             eris.createMessage(msg.channel.id,{
                   embed: {
                       color: 0xb342f4,
                       fields: [{
@@ -170,7 +177,7 @@ voiceChannel.leave()
                   }
              })
         } catch (err) {
-            msg.channel.sendMessage({
+            eris.createMessage(msg.channel.id,{
              embed: {
                       color: 0xd12121,
                       fields: [{
@@ -182,20 +189,12 @@ voiceChannel.leave()
                   }
         })
         }
-        function clean(text) {
-            if (typeof(text) === "string") {
-                return text.replace(/`/g, "`" + String.fromCharCode(8203)).replace(/@/g, "@" + String.fromCharCode(8203));
-            } else {
-                return text;
-            }
-            }
-	}
 };
-nexus.on('ready', () => {
+eris.on('ready', () => {
 	console.log('Ready!');
 });
 
-nexus.on('message', msg => {
+eris.on('message', msg => {
 	if (!msg.content.startsWith(tokens.prefix)) return;
 	if (commands.hasOwnProperty(msg.content.toLowerCase().slice(tokens.prefix.length).split(' ')[0])) commands[msg.content.toLowerCase().slice(tokens.prefix.length).split(' ')[0]](msg);
 });
