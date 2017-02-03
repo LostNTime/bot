@@ -1,3 +1,4 @@
+const eris = require("eris")
 const Discord = require('discord.js');
 const nexus = new Discord.Client();
 let config = require('./config.json')
@@ -17,13 +18,13 @@ youTube.setKey('AIzaSyDtLJezFAIk6FR36SxG-QbN2vdjs9MXujc');
 let queue = {}; 
 const commands = {
 	'play': (msg) => {
-		if (!msg.guild || !msg.member) return;
+		if (!msg.channel.guild || !msg.member) return;
 		const voiceChannel = msg.member.voiceChannel;
-		if (queue[msg.guild.id] === undefined) return msg.channel.sendMessage(`Add some songs to the queue first with ${tokens.prefix}add`);
+		if (queue[msg.channel.guild.id] === undefined) return eris.createMessage(msg.channel.id,`Add some songs to the queue first with ${tokens.prefix}add`);
 		if (!msg.guild.voiceConnection) return commands.join(msg).then(() => commands.play(msg));
-		if (queue[msg.guild.id].playing) return msg.channel.sendMessage('Already Playing Music.');
+		if (queue[msg.channel.guild.id].playing) return eris.createMessage(msg.channel.id,'Already Playing Music.');
 		let dispatcher;
-		queue[msg.guild.id].playing = true;
+		queue[msg.channel.guild.id].playing = true;
 
 		console.log(queue);
 		(function play(song) {
